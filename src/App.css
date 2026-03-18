@@ -177,6 +177,70 @@ h1, h2, h3, .handwritten {
     transition: transform 0.3s ease;
 }
 
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-20px); }
+}
+
+.animate-bounce {
+  animation: bounce 2s infinite;
+}
+
+/* Celebration Mode */
+.celebration-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 10000;
+    background: rgba(255, 249, 242, 0.95);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    backdrop-filter: blur(10px);
+}
+
+.celebration-content h1 {
+    font-size: 4rem;
+    color: var(--deep-pink);
+    margin-bottom: 2rem;
+}
+
+.celebration-content p {
+    font-size: 1.5rem;
+    color: var(--text-muted);
+    margin-bottom: 3rem;
+}
+
+/* Confetti */
+.confetti-container {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+}
+
+.confetti {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    background: var(--deep-pink);
+    top: -10px;
+    animation: fall 3s linear infinite;
+    border-radius: 2px;
+}
+
+@keyframes fall {
+    to {
+        transform: translateY(100vh) rotate(720deg);
+    }
+}
+
+.c-0 { left: 10%; animation-delay: 0s; background: #ff85a1; }
+.c-1 { left: 30%; animation-delay: 0.5s; background: #70e0a1; }
+.c-2 { left: 50%; animation-delay: 1.2s; background: #ffcc66; }
+.c-3 { left: 70%; animation-delay: 0.8s; background: #ba68c8; }
+.c-4 { left: 90%; animation-delay: 1.5s; background: #4fc3f7; }
+
 .polaroid img {
     width: 100%;
     aspect-ratio: 1/1;

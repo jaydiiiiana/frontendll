@@ -9,12 +9,14 @@ import Modals from './components/modals/Modals';
 import Admin from './components/Admin';
 import { galleryPhotos as staticPhotos } from './data/anniversaryData';
 import logo from './assets/anniversary_logo.png';
+import { useRef } from 'react';
 
 const App = () => {
   const [showGallery, setShowGallery] = useState(false);
   const [journeyModal, setJourneyModal] = useState<{ show: boolean, year: number | null }>({ show: false, year: null });
   const [hasSentEmail, setHasSentEmail] = useState(false);
   const [dynamicPhotos, setDynamicPhotos] = useState<string[]>([]);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   // Simple routing
   const [isAdminPath, setIsAdminPath] = useState(window.location.hash === '#/admin' || window.location.pathname === '/admin');
@@ -55,7 +57,14 @@ const App = () => {
     }
   }, [hasSentEmail, apiUrl]);
 
-  const { timeLeft, celebrationDate } = useCountdown(initialCelebrationDate, onAnniversary);
+  const { timeLeft, celebrationDate, isFinished } = useCountdown(initialCelebrationDate, onAnniversary);
+
+  useEffect(() => {
+    if (isFinished && audioRef.current) {
+      audioRef.current.volume = 1.0;
+      audioRef.current.play().catch(e => console.log('Audio autoplay blocked by browser', e));
+    }
+  }, [isFinished]);
 
   const anniversaryCount = celebrationDate.getFullYear() - 2023;
   
@@ -94,11 +103,28 @@ const App = () => {
   }
 
   return (
-    <div className="app-container">
+    <div className={`app-container ${isFinished ? 'celebration-mode' : ''}`}>
       <div className="blob-container">
         <div className="blob blob-1"></div>
         <div className="blob blob-2"></div>
       </div>
+
+      {isFinished && (
+        <div className="celebration-overlay">
+          <div className="confetti-container">
+            {[...Array(50)].map((_, i) => (
+              <div key={i} className={`confetti c-${i % 5}`}></div>
+            ))}
+          </div>
+          <div className="celebration-content">
+            <h1 className="handwritten animate-bounce">Happy {getOrdinal(anniversaryCount)} Anniversary! ❤️</h1>
+            <p>Today is our special day! I love you so much.</p>
+            <button className="btn-mint" onClick={() => document.getElementById('surprise')?.scrollIntoView({ behavior: 'smooth' })}>
+              See My Message 💌
+            </button>
+          </div>
+        </div>
+      )}
 
       <nav className="top-nav">
         <div className="logo-container">
@@ -147,6 +173,13 @@ const App = () => {
           <a href="#/admin" style={{ opacity: 0.2, color: 'inherit', fontSize: '0.7rem' }}>Admin Panel</a>
         </div>
       </main>
+      
+      {/* Hidden celebration sound */}
+      <audio 
+        ref={audioRef} 
+        src="https://assets.mixkit.co/active_storage/sfx/2013/2013-preview.mp3" 
+        preload="auto"
+      />
     </div>
   );
 };
