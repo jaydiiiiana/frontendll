@@ -17,7 +17,8 @@ const App = () => {
   const onAnniversary = useCallback(async () => {
     if (!hasSentEmail) {
       try {
-        await fetch('http://localhost:3000/anniversary/send-email', { method: 'POST' });
+        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+        await fetch(`${apiUrl}/anniversary/send-email`, { method: 'POST' });
         setHasSentEmail(true);
       } catch (e) {
         console.error('Email failed');
