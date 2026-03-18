@@ -8,6 +8,7 @@ import Message from './components/sections/Message';
 import Modals from './components/modals/Modals';
 import Admin from './components/Admin';
 import { galleryPhotos as staticPhotos } from './data/anniversaryData';
+import logo from './assets/anniversary_logo.png';
 
 const App = () => {
   const [showGallery, setShowGallery] = useState(false);
@@ -64,6 +65,28 @@ const App = () => {
     return n + (s[(v - 20) % 10] || s[v] || s[0]);
   };
 
+  // PWA Install Logic
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+
+  useEffect(() => {
+    const handleBeforeInstall = (e: Event) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    };
+    window.addEventListener('beforeinstallprompt', handleBeforeInstall);
+    return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstall);
+  }, []);
+
+  const handleInstallClick = async () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      if (outcome === 'accepted') {
+        setDeferredPrompt(null);
+      }
+    }
+  };
+
   const allPhotos = [...dynamicPhotos, ...staticPhotos];
 
   if (isAdminPath) {
@@ -78,8 +101,16 @@ const App = () => {
       </div>
 
       <nav className="top-nav">
-        <div className="logo handwritten">Our Love</div>
-        <a href="#/admin" className="login-pill">Admin Login 🔒</a>
+        <div className="logo-container">
+          <img src={logo} alt="Logo" className="nav-logo" />
+          <div className="logo-text handwritten">Our Love</div>
+        </div>
+        <div className="nav-actions">
+          {deferredPrompt && (
+            <button onClick={handleInstallClick} className="install-pill">Download App 📥</button>
+          )}
+          <a href="#/admin" className="login-pill">Admin Login 🔒</a>
+        </div>
       </nav>
 
       <main>

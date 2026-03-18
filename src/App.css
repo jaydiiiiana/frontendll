@@ -49,12 +49,30 @@ h1, h2, h3, .handwritten {
     pointer-events: auto;
 }
 
-.logo {
+.logo-container {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.nav-logo {
+    width: 45px;
+    height: 45px;
+    object-fit: contain;
+    border-radius: 50%;
+}
+
+.logo-text {
     font-size: 1.8rem;
     color: var(--deep-pink);
 }
 
-.login-pill {
+.nav-actions {
+    display: flex;
+    gap: 12px;
+}
+
+.install-pill, .login-pill {
     background: rgba(255, 255, 255, 0.7);
     backdrop-filter: blur(10px);
     border: 1px solid var(--soft-pink);
@@ -65,6 +83,18 @@ h1, h2, h3, .handwritten {
     font-size: 0.8rem;
     font-weight: 600;
     transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.install-pill {
+    background: var(--accent-mint);
+    color: white;
+    border-color: var(--accent-mint);
+}
+
+.install-pill:hover {
+    background: #5dc98a;
+    transform: translateY(-2px);
 }
 
 .login-pill:hover {

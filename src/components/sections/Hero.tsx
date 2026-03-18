@@ -11,7 +11,7 @@ const Hero = ({ anniversaryCount, getOrdinal, timeLeft }: HeroProps) => {
     <section id="hero" className="hero">
       <div className="hero-grid">
         <div className="hero-text">
-          <h1>Empowering Our <br />{getOrdinal(anniversaryCount)} Anniversary</h1>
+          <h1>Our Journey <br />{getOrdinal(anniversaryCount)} Anniversary</h1>
           <p className="subtitle">
             Welcome to our {getOrdinal(anniversaryCount)} Anniversary space, where we celebrate {anniversaryCount} years of laughter, growth, and beautiful memories. Join us on this journey of us.
           </p>
