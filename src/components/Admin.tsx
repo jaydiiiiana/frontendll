@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { supabase } from '../lib/supabaseClient';
 
 const Admin = () => {
   const [file, setFile] = useState<File | null>(null);
@@ -32,28 +31,15 @@ const Admin = () => {
     setStatus('Uploading to storage...');
 
     try {
-      // 1. Upload to Supabase Storage
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${Math.random()}.${fileExt}`;
-      const filePath = `memories/${fileName}`;
+      // Create FormData to send the file
+      const formData = new FormData();
+      formData.append('file', file);
 
-      const { error: uploadError } = await supabase.storage
-        .from('anniversary')
-        .upload(filePath, file);
-
-      if (uploadError) throw uploadError;
-
-      // 2. Get Public URL
-      const { data: { publicUrl } } = supabase.storage
-        .from('anniversary')
-        .getPublicUrl(filePath);
-
-      // 3. Save to Backend Database
-      setStatus('Saving to database...');
-      const response = await fetch(`${apiUrl}/anniversary/photos`, {
+      setStatus('Uploading and saving...');
+      
+      const response = await fetch(`${apiUrl}/anniversary/upload`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: publicUrl }),
+        body: formData,
       });
 
       const result = await response.json();
