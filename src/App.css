@@ -31,6 +31,49 @@ h1, h2, h3, .handwritten {
     font-weight: 400;
 }
 
+/* Navigation */
+.top-nav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    padding: 20px 5%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    pointer-events: none; /* Allows clicks to blobs if necessary, but we'll enable children */
+}
+
+.top-nav div, .top-nav a {
+    pointer-events: auto;
+}
+
+.logo {
+    font-size: 1.8rem;
+    color: var(--deep-pink);
+}
+
+.login-pill {
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--soft-pink);
+    padding: 8px 18px;
+    border-radius: 50px;
+    color: var(--text-muted);
+    text-decoration: none;
+    font-size: 0.8rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.login-pill:hover {
+    background: white;
+    color: var(--deep-pink);
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+}
+
 /* Organic Background Blobs */
 .blob-container {
     position: fixed;

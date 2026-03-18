@@ -5,9 +5,11 @@ interface ModalsProps {
   showGallery: boolean;
   onCloseJourney: () => void;
   onCloseGallery: () => void;
+  customPhotos?: string[];
 }
 
-const Modals = ({ journeyModal, showGallery, onCloseJourney, onCloseGallery }: ModalsProps) => {
+const Modals = ({ journeyModal, showGallery, onCloseJourney, onCloseGallery, customPhotos }: ModalsProps) => {
+  const displayPhotos = customPhotos || galleryPhotos;
   return (
     <>
       {journeyModal.show && journeyModal.year !== null && (
@@ -38,9 +40,14 @@ const Modals = ({ journeyModal, showGallery, onCloseJourney, onCloseGallery }: M
             <span className="close-btn" onClick={onCloseGallery}>&times;</span>
             <h2 className="handwritten">Our Beautiful Memories</h2>
             <div className="photo-grid-3x3">
-              {galleryPhotos.map((photo, index) => (
+              {displayPhotos.map((photo, index) => (
                 <div key={index} style={{ aspectRatio: '1/1', overflow: 'hidden', borderRadius: '15px' }}>
-                  <img src={`/${photo}`} alt={`Memory ${index + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} loading="lazy" />
+                  <img 
+                    src={photo.startsWith('http') ? photo : `/${photo}`} 
+                    alt={`Memory ${index + 1}`} 
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                    loading="lazy" 
+                  />
                 </div>
               ))}
             </div>
