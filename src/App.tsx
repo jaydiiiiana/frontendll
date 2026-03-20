@@ -120,7 +120,7 @@ const App = () => {
             ))}
           </div>
           <div className="celebration-content">
-            <h1 className="handwritten animate-bounce">Happy {getOrdinal(anniversaryCount)} Anniversary! ❤️</h1>
+            <h1 className="handwritten animate-bounce">We are celebrating our {getOrdinal(anniversaryCount)} Anniversary! ❤️</h1>
             <p>Today is our special day! I love you so much.</p>
             <button className="btn-mint" onClick={() => setIsCelebrationDismissed(true)}>
               Exit ✨
