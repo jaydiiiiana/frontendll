@@ -21,6 +21,8 @@ const App = () => {
   // Simple routing
   const [isAdminPath, setIsAdminPath] = useState(window.location.hash === '#/admin' || window.location.pathname === '/admin');
 
+  const [isCelebrationDismissed, setIsCelebrationDismissed] = useState(false);
+
   const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
   const fetchPhotos = useCallback(async () => {
@@ -109,7 +111,7 @@ const App = () => {
         <div className="blob blob-2"></div>
       </div>
 
-      {isFinished && (
+      {isFinished && !isCelebrationDismissed && (
         <div className="celebration-overlay">
           <div className="confetti-container">
             {[...Array(50)].map((_, i) => (
@@ -119,8 +121,8 @@ const App = () => {
           <div className="celebration-content">
             <h1 className="handwritten animate-bounce">Happy {getOrdinal(anniversaryCount)} Anniversary! ❤️</h1>
             <p>Today is our special day! I love you so much.</p>
-            <button className="btn-mint" onClick={() => document.getElementById('surprise')?.scrollIntoView({ behavior: 'smooth' })}>
-              See My Message 💌
+            <button className="btn-mint" onClick={() => setIsCelebrationDismissed(true)}>
+              Exit ✨
             </button>
           </div>
         </div>
@@ -138,6 +140,7 @@ const App = () => {
           <a href="#/admin" className="login-pill">Admin Login 🔒</a>
         </div>
       </nav>
+
 
       <main>
         <Hero 
