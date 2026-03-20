@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { containsBadWords } from '../../lib/profanityFilter';
+import { supabase } from '../../lib/supabaseClient';
 
 interface Comment {
   id: string;
@@ -20,11 +21,32 @@ const Comments = () => {
 
   useEffect(() => {
     fetchComments();
+    
+    // Subscribe to real-time changes
+    const channel = supabase
+      .channel('realtime comments')
+      .on('postgres_changes', 
+        { event: 'INSERT', schema: 'public', table: 'comments' }, 
+        (payload) => {
+          const newComment = payload.new as Comment;
+          setComments((prev) => {
+            // Avoid duplicates if fetchComments also ran
+            if (prev.some(c => c.id === newComment.id)) return prev;
+            return [newComment, ...prev];
+          });
+        }
+      )
+      .subscribe();
+
     const savedNickname = localStorage.getItem('anniversary_nickname');
     if (savedNickname) {
       setNickname(savedNickname);
       setShowNicknameInput(false);
     }
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const fetchComments = async () => {
@@ -38,6 +60,7 @@ const Comments = () => {
       console.error('Failed to fetch comments');
     }
   };
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -70,7 +93,6 @@ const Comments = () => {
       const data = await res.json();
       if (data.success) {
         setNewComment('');
-        fetchComments();
         localStorage.setItem('anniversary_nickname', nickname);
       } else {
         setError(data.message || 'Failed to post comment');
