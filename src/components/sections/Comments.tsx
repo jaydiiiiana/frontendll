@@ -28,15 +28,17 @@ const Comments = () => {
       .on('postgres_changes', 
         { event: 'INSERT', schema: 'public', table: 'comments' }, 
         (payload) => {
+          console.log('⚡ Realtime update received!', payload);
           const newComment = payload.new as Comment;
           setComments((prev) => {
-            // Avoid duplicates if fetchComments also ran
             if (prev.some(c => c.id === newComment.id)) return prev;
             return [newComment, ...prev];
           });
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('🔔 Subscription status:', status);
+      });
 
     const savedNickname = localStorage.getItem('anniversary_nickname');
     if (savedNickname) {
@@ -48,6 +50,7 @@ const Comments = () => {
       supabase.removeChannel(channel);
     };
   }, []);
+
 
   const fetchComments = async () => {
     try {
