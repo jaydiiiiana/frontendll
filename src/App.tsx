@@ -5,6 +5,7 @@ import MemoryGame from './components/MemoryGame';
 import Hero from './components/sections/Hero';
 import Story from './components/sections/Story';
 import Message from './components/sections/Message';
+import Comments from './components/sections/Comments';
 import Modals from './components/modals/Modals';
 import Admin from './components/Admin';
 import { galleryPhotos as staticPhotos } from './data/anniversaryData';
@@ -163,6 +164,8 @@ const App = () => {
           anniversaryCount={anniversaryCount} 
           onOpenGallery={() => setShowGallery(true)} 
         />
+
+        <Comments />
 
         <Modals 
           journeyModal={journeyModal}
