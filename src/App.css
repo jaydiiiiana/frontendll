@@ -272,6 +272,13 @@ h1, h2, h3, .handwritten {
     transform: translateY(-2px);
 }
 
+.btn-mint:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+    transform: none;
+    opacity: 0.7;
+}
+
 /* Medium Screens (Tablets/Small Laptops) */
 @media (min-width: 769px) and (max-width: 1100px) {
     .section {
