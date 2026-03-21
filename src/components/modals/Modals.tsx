@@ -1,4 +1,3 @@
-import { journeyLetters } from '../../data/anniversaryData';
 
 interface Photo {
   id: string;
@@ -13,13 +12,16 @@ interface ModalsProps {
   onCloseGallery: () => void;
   customPhotos?: Photo[];
   setDynamicPhotos?: React.Dispatch<React.SetStateAction<Photo[]>>;
+  stories: any[];
 }
 
-const Modals = ({ journeyModal, showGallery, onCloseJourney, onCloseGallery, customPhotos, setDynamicPhotos }: ModalsProps) => {
+const Modals = ({ journeyModal, showGallery, onCloseJourney, onCloseGallery, customPhotos, setDynamicPhotos, stories }: ModalsProps) => {
   const displayPhotos = customPhotos || [];
   const nickname = localStorage.getItem('anniversary_nickname') || 'Someone';
   const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
   const emojis = ['❤️', '✨', '🥰', '🔥'];
+
+  const currentStory = journeyModal.year !== null ? stories[journeyModal.year] : null;
 
   const handleReact = async (photoId: string, emoji: string) => {
     if (!nickname.trim()) return;
@@ -65,22 +67,22 @@ const Modals = ({ journeyModal, showGallery, onCloseJourney, onCloseGallery, cus
 
   return (
     <>
-      {journeyModal.show && journeyModal.year !== null && (
+      {journeyModal.show && journeyModal.year !== null && currentStory && (
         <div className="modal" onClick={onCloseJourney}>
           <div className="modal-content" onClick={e => e.stopPropagation()}>
             <span className="close-btn" onClick={onCloseJourney}>&times;</span>
             <div style={{
               width: '100%',
               height: '300px',
-              background: `url(${journeyModal.year === 0 ? '/us1.png.jpg' : journeyModal.year === 1 ? '/us2.png.jpg' : '/us3.png'})`,
+              background: `url(${currentStory.photo || currentStory.image_url || (journeyModal.year === 0 ? '/us1.png.jpg' : journeyModal.year === 1 ? '/us2.png.jpg' : '/us3.png')})`,
               backgroundSize: 'cover',
               backgroundPosition: 'center',
               borderRadius: '20px',
               marginBottom: '20px'
             }}></div>
-            <h2 className="handwritten">{journeyLetters[journeyModal.year].year}</h2>
+            <h2 className="handwritten">{currentStory.year || currentStory.year_title}</h2>
             <div style={{ marginTop: '20px', lineHeight: '1.8', color: '#555', textAlign: 'left' }}>
-              <p>{journeyLetters[journeyModal.year].letter}</p>
+              <p>{currentStory.letter || currentStory.letter_content}</p>
             </div>
             <button className="btn-mint" style={{ marginTop: '20px' }} onClick={onCloseJourney}>Close Letter</button>
           </div>

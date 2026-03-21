@@ -8,7 +8,7 @@ import Message from './components/sections/Message';
 import Comments from './components/sections/Comments';
 import Modals from './components/modals/Modals';
 import Admin from './components/Admin';
-import { galleryPhotos as staticPhotos } from './data/anniversaryData';
+import { galleryPhotos as staticPhotos, journeyLetters as staticStories } from './data/anniversaryData';
 import logo from './assets/anniversary_logo.png';
 import { useRef } from 'react';
 import { supabase } from './lib/supabaseClient';
@@ -24,6 +24,7 @@ const App = () => {
   }
 
   const [dynamicPhotos, setDynamicPhotos] = useState<Photo[]>([]);
+  const [stories, setStories] = useState<any[]>(staticStories);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   // Simple routing
@@ -45,12 +46,28 @@ const App = () => {
     }
   }, [apiUrl]);
 
+  const fetchStories = useCallback(async () => {
+    try {
+      const res = await fetch(`${apiUrl}/anniversary/stories`);
+      const result = await res.json();
+      if (result.success && result.data && result.data.length > 0) {
+        setStories(result.data);
+      } else {
+        setStories(staticStories);
+      }
+    } catch (e) {
+      setStories(staticStories);
+    }
+  }, [apiUrl]);
+
   useEffect(() => {
     fetchPhotos();
+    fetchStories();
 
-    // Subscribe to photo changes for realtime reactions (Ensuring ID types match)
-    const channel = supabase
+    // Subscribe to photo changes for realtime reactions
+    const photosChannel = supabase
       .channel('realtime photos')
+// ... (omitting same lines for brevity in TargetContent but they are there)
       .on('postgres_changes', 
         { event: '*', schema: 'public', table: 'photos' }, 
         (payload) => {
@@ -74,15 +91,21 @@ const App = () => {
       )
       .subscribe();
 
+    const storiesChannel = supabase
+      .channel('realtime stories')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'stories' }, () => fetchStories())
+      .subscribe();
+
     const handleHashChange = () => {
       setIsAdminPath(window.location.hash === '#/admin' || window.location.pathname === '/admin');
     };
     window.addEventListener('hashchange', handleHashChange);
     return () => {
       window.removeEventListener('hashchange', handleHashChange);
-      supabase.removeChannel(channel);
+      supabase.removeChannel(photosChannel);
+      supabase.removeChannel(storiesChannel);
     };
-  }, [fetchPhotos]);
+  }, [fetchPhotos, fetchStories]);
 
   const initialCelebrationDate = new Date(2026, 2, 20); // Initial 3rd Year Anniversary
   
@@ -214,6 +237,7 @@ const App = () => {
 
         <Story 
           onCardClick={(index) => setJourneyModal({ show: true, year: index })} 
+          stories={stories}
         />
 
         <section id="game" className="section">
@@ -236,6 +260,7 @@ const App = () => {
           onCloseGallery={() => setShowGallery(false)}
           customPhotos={allPhotos}
           setDynamicPhotos={setDynamicPhotos}
+          stories={stories}
         />
         
         <div style={{ textAlign: 'center', paddingBottom: '30px' }}>

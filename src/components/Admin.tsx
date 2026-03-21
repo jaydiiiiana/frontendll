@@ -8,6 +8,10 @@ const Admin = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [password, setPassword] = useState('');
   const [photos, setPhotos] = useState<any[]>([]);
+  const [stories, setStories] = useState<any[]>([]);
+  const [storyForm, setStoryForm] = useState({ id: '', title: '', letter: '', image_url: '', color: 'card-pink' });
+  const [isEditingStory, setIsEditingStory] = useState(false);
+  const [storyFile, setStoryFile] = useState<File | null>(null);
 
   const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
@@ -21,39 +25,85 @@ const Admin = () => {
     try {
       const res = await fetch(`${apiUrl}/anniversary/photos`);
       const result = await res.json();
-      if (result.success) {
-        setPhotos(result.data);
-      }
+      if (result.success) setPhotos(result.data);
     } catch (e) {
       console.error('Failed to fetch photos');
+    }
+  }, [apiUrl]);
+
+  const fetchStories = useCallback(async () => {
+    try {
+      const res = await fetch(`${apiUrl}/anniversary/stories`);
+      const result = await res.json();
+      if (result.success) setStories(result.data);
+    } catch (e) {
+      console.error('Failed to fetch stories');
     }
   }, [apiUrl]);
 
   useEffect(() => {
     if (isAuthenticated) {
       fetchPhotos();
+      fetchStories();
       
-      const channel = supabase
-        .channel('admin photos')
-        .on('postgres_changes', 
-          { event: '*', schema: 'public', table: 'photos' }, 
-          (payload) => {
-            if (payload.eventType === 'INSERT') {
-              fetchPhotos();
-            } else if (payload.eventType === 'UPDATE') {
-              fetchPhotos();
-            } else if (payload.eventType === 'DELETE') {
-              fetchPhotos();
-            }
-          }
-        )
-        .subscribe();
+      const photosChannel = supabase.channel('admin photos').on('postgres_changes', { event: '*', schema: 'public', table: 'photos' }, () => fetchPhotos()).subscribe();
+      const storiesChannel = supabase.channel('admin stories').on('postgres_changes', { event: '*', schema: 'public', table: 'stories' }, () => fetchStories()).subscribe();
       
       return () => {
-        supabase.removeChannel(channel);
+        supabase.removeChannel(photosChannel);
+        supabase.removeChannel(storiesChannel);
       };
     }
-  }, [isAuthenticated, fetchPhotos]);
+  }, [isAuthenticated, fetchPhotos, fetchStories]);
+
+  const handleStorySubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    let finalImageUrl = storyForm.image_url;
+
+    if (storyFile) {
+      const formData = new FormData();
+      formData.append('file', storyFile);
+      const res = await fetch(`${apiUrl}/anniversary/upload-asset`, { method: 'POST', body: formData });
+      const result = await res.json();
+      if (result.success) finalImageUrl = result.url;
+    }
+
+    const payload = { ...storyForm, image_url: finalImageUrl };
+    const method = isEditingStory ? 'PUT' : 'POST';
+    const url = isEditingStory ? `${apiUrl}/anniversary/stories/${storyForm.id}` : `${apiUrl}/anniversary/stories`;
+
+    const res = await fetch(url, {
+      method,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    const result = await res.json();
+    if (result.success) {
+      fetchStories();
+      setStoryForm({ id: '', title: '', letter: '', image_url: '', color: 'card-pink' });
+      setStoryFile(null);
+      setIsEditingStory(false);
+    }
+  };
+
+  const handleEditStory = (story: any) => {
+    setStoryForm({
+      id: story.id,
+      title: story.year_title,
+      letter: story.letter_content,
+      image_url: story.image_url,
+      color: story.color_class
+    });
+    setIsEditingStory(true);
+  };
+
+  const handleDeleteStory = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this story?')) return;
+    const res = await fetch(`${apiUrl}/anniversary/stories/${id}`, { method: 'DELETE' });
+    const result = await res.json();
+    if (result.success) fetchStories();
+  };
+
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -301,6 +351,72 @@ const Admin = () => {
                   No photos uploaded yet. They'll appear here!
                 </div>
               )}
+            </div>
+          </div>
+        </div>
+
+        {/* Stories Management Section */}
+        <div style={{ marginTop: '50px' }}>
+          <div className="admin-card">
+            <h2 style={{ marginBottom: '25px', fontSize: '1.8rem', color: 'var(--deep-pink)' }}>Anniversary Stories Manager</h2>
+            
+            <form onSubmit={handleStorySubmit} className="admin-form">
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                <input 
+                  type="text" 
+                  placeholder="Anniversary Title (e.g. 4th Anniversary)" 
+                  value={storyForm.title}
+                  onChange={e => setStoryForm({...storyForm, title: e.target.value})}
+                  style={{ padding: '12px', borderRadius: '10px', border: '1px solid #eee' }}
+                />
+                <textarea 
+                  placeholder="The Story/Letter..." 
+                  value={storyForm.letter}
+                  onChange={e => setStoryForm({...storyForm, letter: e.target.value})}
+                  style={{ padding: '12px', borderRadius: '10px', border: '1px solid #eee', minHeight: '150px' }}
+                />
+                <select 
+                  value={storyForm.color}
+                  onChange={e => setStoryForm({...storyForm, color: e.target.value})}
+                  style={{ padding: '12px', borderRadius: '10px', border: '1px solid #eee' }}
+                >
+                  <option value="card-yellow">Yellow Theme</option>
+                  <option value="card-pink">Pink Theme</option>
+                  <option value="card-peach">Peach Theme</option>
+                </select>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                <div style={{ border: '2px dashed #eee', padding: '20px', borderRadius: '10px', textAlign: 'center', position: 'relative' }}>
+                  <input type="file" accept="image/*" onChange={e => setStoryFile(e.target.files?.[0] || null)} style={{ position: 'absolute', inset: 0, opacity: 0 }} />
+                  {storyFile ? storyFile.name : (storyForm.image_url ? 'Change Photo' : 'Upload Card Photo')}
+                </div>
+                { (storyFile || storyForm.image_url) && (
+                  <img 
+                    src={storyFile ? URL.createObjectURL(storyFile) : storyForm.image_url} 
+                    style={{ width: '100%', height: '120px', objectFit: 'cover', borderRadius: '10px' }} 
+                  />
+                )}
+                <button type="submit" className="btn-mint" style={{ marginTop: 'auto', padding: '15px', justifyContent: 'center' }}>
+                  {isEditingStory ? 'Update Anniversary Story ✨' : 'Add New Anniversary Story ✨'}
+                </button>
+                {isEditingStory && (
+                  <button type="button" onClick={() => { setIsEditingStory(false); setStoryForm({ id: '', title: '', letter: '', image_url: '', color: 'card-pink' }); }} style={{ padding: '10px', background: '#eee', border: 'none', borderRadius: '10px' }}>Cancel Edit</button>
+                )}
+              </div>
+            </form>
+
+            <div className="admin-story-list-grid">
+              {stories.map(story => (
+                <div key={story.id} className={`story-card ${story.color_class}`} style={{ position: 'relative', overflow: 'hidden', padding: '20px', borderRadius: '20px' }}>
+                  <img src={story.image_url} style={{ width: '100%', height: '150px', objectFit: 'cover', borderRadius: '15px', marginBottom: '15px' }} />
+                  <h3>{story.year_title}</h3>
+                  <p style={{ fontSize: '0.85rem' }}>{story.letter_content.substring(0, 100)}...</p>
+                  <div style={{ display: 'flex', gap: '10px', marginTop: '15px' }}>
+                    <button onClick={() => handleEditStory(story)} style={{ flex: 1, padding: '8px', border: '1px solid var(--deep-pink)', background: 'white', color: 'var(--deep-pink)', borderRadius: '10px', cursor: 'pointer' }}>Edit</button>
+                    <button onClick={() => handleDeleteStory(story.id)} style={{ flex: 1, padding: '8px', border: 'none', background: '#ff4d4f', color: 'white', borderRadius: '10px', cursor: 'pointer' }}>Delete</button>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </div>
