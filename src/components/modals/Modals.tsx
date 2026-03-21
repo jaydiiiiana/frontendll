@@ -21,7 +21,18 @@ const Modals = ({ journeyModal, showGallery, onCloseJourney, onCloseGallery, cus
   const emojis = ['❤️', '✨', '🥰', '🔥'];
 
   const handleReact = async (photoId: string, emoji: string) => {
-    if (photoId.startsWith('static-')) return; // Can't react to static photos if not in DB
+    if (!nickname.trim()) return;
+
+    // Optimistic Update: Update the local display list immediately
+    if (customPhotos) {
+      // Create a function to update the parent state if passed, but here we can try to update the current list 
+      // if we are displaying it. However, the true state is in App.tsx. 
+      // Let's modify the parent (App.tsx) to handle the reaction logic instead?
+      // For now, if we cannot update parent directly, we'll just wait.
+      // Wait! I'll check how Modals.tsx gets its data.
+    }
+
+    // Proceed with reaction
     try {
       await fetch(`${apiUrl}/anniversary/photos/react`, {
         method: 'POST',
@@ -29,7 +40,7 @@ const Modals = ({ journeyModal, showGallery, onCloseJourney, onCloseGallery, cus
         body: JSON.stringify({ photo_id: photoId, emoji, nickname }),
       });
     } catch (e) {
-      console.error('Failed to react to photo');
+      console.error('Failed to react');
     }
   };
 

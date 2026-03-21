@@ -1,7 +1,10 @@
 export const BAD_WORDS = [
   'nigger', 'niga', 'nigg@', 'ni ga', 'nigga', 'n.i.g.g.a', 'n!gga', 
   'fuck', 'shit', 'asshole', 'bitch', 'cunt', 'dick', 'pussy',
-  'tangina', 'putangina', 'gago', 'kupal', 'pakyu' 
+  'tangina', 'putangina', 'gago', 'kupal', 'pakyu', 'pokpok', 'bobo', 'hayop',
+  'tanga', 'ulol', 'panot', 'duwag', 'lintik', 'salot', 'tarantado', 'yawa', 'piste',
+  'crush mo si', 'nililigawan mo si', 'nililigawan mo', 'crush mo', 'mahal mo si', 
+  'kala mo', 'si ano', 'sino si', 'pakilala mo si', 'ano name', 'name ni'
 ];
 
 export function containsBadWords(text: string): boolean {

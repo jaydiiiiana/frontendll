@@ -85,6 +85,19 @@ const Comments = () => {
       return;
     }
 
+    // Optimistic Update: Create a temporary comment object
+    const tempId = 'temp-' + Date.now();
+    const tempComment: Comment = {
+      id: tempId,
+      nickname,
+      comment: textToSubmit,
+      created_at: new Date().toISOString(),
+      parent_id: parentId,
+      reactions: {}
+    };
+    
+    setComments(prev => [tempComment, ...prev]);
+
     setIsSubmitting(true);
     try {
       const res = await fetch(`${apiUrl}/anniversary/comments`, {
@@ -102,9 +115,14 @@ const Comments = () => {
         if (parentId) setReplyComment('');
         else setNewComment('');
         setReplyingTo(null);
+      } else {
+        // Rollback on failure
+        setComments(prev => prev.filter(c => c.id !== tempId));
+        setError('Failed to post comment.');
       }
     } catch (e) {
       setError('Could not post comment.');
+      setComments(prev => prev.filter(c => c.id !== tempId));
     } finally {
       setIsSubmitting(false);
     }
@@ -116,6 +134,17 @@ const Comments = () => {
       return;
     }
 
+    // Optimistic Update locally
+    setComments(prev => prev.map(c => {
+      if (c.id !== commentId) return c;
+      const reactions = { ...(c.reactions || {}) };
+      const users = reactions[emoji] ? [...reactions[emoji]] : [];
+      const idx = users.indexOf(nickname);
+      if (idx > -1) users.splice(idx, 1);
+      else users.push(nickname);
+      return { ...c, reactions: { ...reactions, [emoji]: users } };
+    }));
+
     try {
       await fetch(`${apiUrl}/anniversary/comments/react`, {
         method: 'POST',
@@ -124,6 +153,7 @@ const Comments = () => {
       });
     } catch (e) {
       console.error('Failed to react');
+      // On failure, real-time will eventually sync it back (or refresh)
     }
   };
 
