@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { supabase } from '../lib/supabaseClient';
 
 const Admin = () => {
   const [file, setFile] = useState<File | null>(null);
@@ -16,7 +17,7 @@ const Admin = () => {
     }
   }, [isAuthenticated]);
 
-  const fetchPhotos = async () => {
+  const fetchPhotos = useCallback(async () => {
     try {
       const res = await fetch(`${apiUrl}/anniversary/photos`);
       const result = await res.json();
@@ -26,7 +27,33 @@ const Admin = () => {
     } catch (e) {
       console.error('Failed to fetch photos');
     }
-  };
+  }, [apiUrl]);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchPhotos();
+      
+      const channel = supabase
+        .channel('admin photos')
+        .on('postgres_changes', 
+          { event: '*', schema: 'public', table: 'photos' }, 
+          (payload) => {
+            if (payload.eventType === 'INSERT') {
+              fetchPhotos();
+            } else if (payload.eventType === 'UPDATE') {
+              fetchPhotos();
+            } else if (payload.eventType === 'DELETE') {
+              fetchPhotos();
+            }
+          }
+        )
+        .subscribe();
+      
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    }
+  }, [isAuthenticated, fetchPhotos]);
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
