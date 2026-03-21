@@ -12,9 +12,10 @@ interface ModalsProps {
   onCloseJourney: () => void;
   onCloseGallery: () => void;
   customPhotos?: Photo[];
+  setDynamicPhotos?: React.Dispatch<React.SetStateAction<Photo[]>>;
 }
 
-const Modals = ({ journeyModal, showGallery, onCloseJourney, onCloseGallery, customPhotos }: ModalsProps) => {
+const Modals = ({ journeyModal, showGallery, onCloseJourney, onCloseGallery, customPhotos, setDynamicPhotos }: ModalsProps) => {
   const displayPhotos = customPhotos || [];
   const nickname = localStorage.getItem('anniversary_nickname') || 'Someone';
   const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
@@ -23,16 +24,34 @@ const Modals = ({ journeyModal, showGallery, onCloseJourney, onCloseGallery, cus
   const handleReact = async (photoId: string, emoji: string) => {
     if (!nickname.trim()) return;
 
-    // Optimistic Update: Update the local display list immediately
-    if (customPhotos) {
-      // Create a function to update the parent state if passed, but here we can try to update the current list 
-      // if we are displaying it. However, the true state is in App.tsx. 
-      // Let's modify the parent (App.tsx) to handle the reaction logic instead?
-      // For now, if we cannot update parent directly, we'll just wait.
-      // Wait! I'll check how Modals.tsx gets its data.
+    // Optimistic Update locally
+    if (setDynamicPhotos) {
+      setDynamicPhotos(prev => {
+        const existing = prev.find(p => p.id === photoId || p.url === photoId);
+        if (existing) {
+          return prev.map(p => {
+            if (p.id === photoId || p.url === photoId) {
+              const reactions = { ...(p.reactions || {}) };
+              const users = reactions[emoji] ? [...reactions[emoji]] : [];
+              const idx = users.indexOf(nickname);
+              if (idx > -1) users.splice(idx, 1);
+              else users.push(nickname);
+              return { ...p, reactions: { ...reactions, [emoji]: users } };
+            }
+            return p;
+          });
+        } else {
+          // If it's a static photo (not in dynamicPhotos yet), find it in displayPhotos and add it
+          const photoToCopy = displayPhotos.find(p => p.id === photoId || p.url === photoId);
+          if (photoToCopy) {
+            const reactions = { [emoji]: [nickname] };
+            return [...prev, { ...photoToCopy, reactions }];
+          }
+          return prev;
+        }
+      });
     }
 
-    // Proceed with reaction
     try {
       await fetch(`${apiUrl}/anniversary/photos/react`, {
         method: 'POST',

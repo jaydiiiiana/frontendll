@@ -34,8 +34,18 @@ const Comments = () => {
           if (payload.eventType === 'INSERT') {
             const newC = payload.new as Comment;
             setComments((prev) => {
+              // Check if we already have this exact ID
               if (prev.some(c => c.id === newC.id)) return prev;
-              return [newC, ...prev];
+              
+              // NEW: Remove any matching optimistic 'temp-' comment
+              // We match by nickname and content (and it must start with 'temp-')
+              const filtered = prev.filter(c => 
+                !(c.id.startsWith('temp-') && 
+                  c.nickname === newC.nickname && 
+                  c.comment === newC.comment)
+              );
+              
+              return [newC, ...filtered];
             });
           } else if (payload.eventType === 'UPDATE') {
             const updatedC = payload.new as Comment;
@@ -78,7 +88,11 @@ const Comments = () => {
     }
     
     const textToSubmit = parentId ? replyComment : newComment;
-    if (!textToSubmit.trim()) return;
+    const words = textToSubmit.trim().split(/\s+/).filter(w => w.length > 0);
+    if (words.length < 2) {
+      setError('Please write at least two words! ❤️');
+      return;
+    }
 
     if (containsBadWords(nickname) || containsBadWords(textToSubmit)) {
       setError('Please be kind! Inappropriate words detected.');
@@ -242,9 +256,9 @@ const Comments = () => {
                   onClick={(e) => handleSubmit(e, c.id)} 
                   disabled={isSubmitting || !replyComment.trim()}
                   className="btn-mint" 
-                  style={{ padding: '8px 20px', fontSize: '0.85rem', cursor: 'pointer' }}
+                  style={{ padding: '8px 20px', fontSize: '0.85rem', cursor: isSubmitting ? 'not-allowed' : 'pointer', opacity: isSubmitting ? 0.7 : 1 }}
                 >
-                  Post Reply
+                  {isSubmitting && replyingTo === c.id ? 'Posting...' : 'Post Reply'}
                 </button>
               </div>
             </div>
@@ -259,6 +273,13 @@ const Comments = () => {
       <div className="container">
         <h2 className="section-title">Wall of Love</h2>
         <p style={{ color: 'var(--text-muted)', marginBottom: '40px' }}>Leave a sweet message for us! ❤️</p>
+        
+        {error && (
+          <div style={{ maxWidth: '600px', margin: '0 auto 20px', padding: '15px', borderRadius: '15px', background: '#fff1f0', color: '#ff4d4f', border: '1px solid #ffccc7', fontSize: '0.9rem', textAlign: 'center' }}>
+            {error}
+            <button onClick={() => setError(null)} style={{ marginLeft: '10px', background: 'none', border: 'none', cursor: 'pointer', color: '#ff4d4f', fontWeight: 'bold' }}>✕</button>
+          </div>
+        )}
 
         {showNicknameInput ? (
           <div style={{ maxWidth: '450px', margin: '0 auto 50px', background: 'white', padding: '40px', borderRadius: '35px', boxShadow: '0 15px 40px rgba(0,0,0,0.06)', border: '1px solid #fff' }}>

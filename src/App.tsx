@@ -48,23 +48,27 @@ const App = () => {
   useEffect(() => {
     fetchPhotos();
 
-    // Subscribe to photo changes for realtime reactions
+    // Subscribe to photo changes for realtime reactions (Ensuring ID types match)
     const channel = supabase
       .channel('realtime photos')
       .on('postgres_changes', 
         { event: '*', schema: 'public', table: 'photos' }, 
         (payload) => {
           const raw = payload.new as any;
+          if (!raw) return;
+          
+          const photoId = String(raw.id); // ALWAYS convert to string for comparison
           const photo: Photo = {
-            id: raw.id,
-            url: raw.image_url || raw.url, // Handle both image_url and url
+            id: photoId, 
+            url: raw.image_url || raw.url, 
             reactions: raw.reactions || {}
           };
 
           if (payload.eventType === 'INSERT') {
             setDynamicPhotos(prev => [photo, ...prev]);
           } else if (payload.eventType === 'UPDATE') {
-            setDynamicPhotos(prev => prev.map(p => p.id === photo.id ? photo : p));
+            // Compare IDs as strings to avoid number vs string mismatch
+            setDynamicPhotos(prev => prev.map(p => String(p.id) === photoId || p.url === photo.url ? photo : p));
           }
         }
       )
@@ -231,6 +235,7 @@ const App = () => {
           onCloseJourney={() => setJourneyModal({ show: false, year: null })}
           onCloseGallery={() => setShowGallery(false)}
           customPhotos={allPhotos}
+          setDynamicPhotos={setDynamicPhotos}
         />
         
         <div style={{ textAlign: 'center', paddingBottom: '30px' }}>
