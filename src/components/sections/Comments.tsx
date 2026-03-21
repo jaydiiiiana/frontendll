@@ -12,9 +12,7 @@ interface Comment {
 }
 
 const isValidMessage = (text: string) => {
-  if (!text) return false;
-  const words = text.trim().split(/\s+/).filter(w => w.length > 0);
-  return words.length >= 2;
+  return (text || '').trim().length > 0;
 };
 
 interface CommentItemProps {
@@ -104,57 +102,52 @@ const CommentItem = ({
         </button>
       </div>
 
-      {!isReply && (
-        <div style={{ marginTop: '15px' }}>
-          {getReplies(c.id).map(reply => (
-            <CommentItem 
-              key={reply.id} 
-              c={reply} 
-              isReply={true}
-              nickname={nickname}
-              replyingTo={replyingTo}
-              setReplyingTo={setReplyingTo}
-              replyComments={replyComments}
-              setReplyComments={setReplyComments}
-              handleSubmit={handleSubmit}
-              handleReact={handleReact}
-              isSubmitting={isSubmitting}
-              getReplies={getReplies}
-              emojis={emojis}
-              setError={setError}
-            />
-          ))}
-          
-          {isTargetOfReply && (
-            <div style={{ marginTop: '15px', padding: '20px', background: 'white', borderRadius: '25px', border: '1px solid #eee', boxShadow: '0 10px 30px rgba(0,0,0,0.05)' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                <span style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>Replying as <strong>{nickname}</strong></span>
-                <button onClick={() => setReplyingTo(null)} style={{ background: 'none', border: 'none', color: '#ff4d4f', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 'bold' }}>Cancel</button>
-              </div>
-              <textarea 
-                value={currentReplyText}
-                onChange={(e) => setReplyComments(prev => ({ ...prev, [c.id]: e.target.value }))}
-                placeholder="Write your sweet reply here..."
-                style={{ width: '100%', padding: '15px', borderRadius: '15px', border: '1px solid #eee', outline: 'none', fontSize: '1rem', minHeight: '100px', background: '#fafafa', resize: 'vertical' }}
-                autoFocus
-              />
-              <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '15px' }}>
-                <button 
-                  onClick={(e) => handleSubmit(e, c.id)} 
-                  disabled={isSubmitting || !isValidMessage(currentReplyText)}
-                  className="btn-mint" 
-                  style={{ padding: '10px 25px' }}
-                >
-                  {isSubmitting ? 'Posting...' : 'Post Reply'}
-                </button>
-              </div>
-              {!isValidMessage(currentReplyText) && currentReplyText.trim().length > 0 && (
-                <p style={{ color: 'var(--deep-pink)', fontSize: '0.75rem', marginTop: '8px', textAlign: 'right' }}>Please write at least two words! ❤️</p>
-              )}
+      <div style={{ marginTop: '15px' }}>
+        {getReplies(c.id).map(reply => (
+          <CommentItem 
+            key={reply.id} 
+            c={reply} 
+            isReply={true}
+            nickname={nickname}
+            replyingTo={replyingTo}
+            setReplyingTo={setReplyingTo}
+            replyComments={replyComments}
+            setReplyComments={setReplyComments}
+            handleSubmit={handleSubmit}
+            handleReact={handleReact}
+            isSubmitting={isSubmitting}
+            getReplies={getReplies}
+            emojis={emojis}
+            setError={setError}
+          />
+        ))}
+        
+        {isTargetOfReply && (
+          <div style={{ marginTop: '15px', padding: '20px', background: 'white', borderRadius: '25px', border: '1px solid #eee', boxShadow: '0 10px 30px rgba(0,0,0,0.05)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+              <span style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>Replying as <strong>{nickname}</strong></span>
+              <button onClick={() => setReplyingTo(null)} style={{ background: 'none', border: 'none', color: '#ff4d4f', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 'bold' }}>Cancel</button>
             </div>
-          )}
-        </div>
-      )}
+            <textarea 
+              value={currentReplyText}
+              onChange={(e) => setReplyComments(prev => ({ ...prev, [c.id]: e.target.value }))}
+              placeholder="Write your sweet reply here..."
+              style={{ width: '100%', padding: '15px', borderRadius: '15px', border: '1px solid #eee', outline: 'none', fontSize: '1rem', minHeight: '100px', background: '#fafafa', resize: 'vertical' }}
+              autoFocus
+            />
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '15px' }}>
+              <button 
+                onClick={(e) => handleSubmit(e, c.id)} 
+                disabled={isSubmitting || !isValidMessage(currentReplyText)}
+                className="btn-mint" 
+                style={{ padding: '10px 25px' }}
+              >
+                {isSubmitting ? 'Posting...' : 'Post Reply'}
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 };
@@ -232,7 +225,7 @@ const Comments = () => {
     
     const textToSubmit = parentId ? (replyComments[parentId] || '') : newComment;
     if (!isValidMessage(textToSubmit)) {
-      setError('Please write at least two words! ❤️');
+      setError('Comment cannot be empty! ❤️');
       return;
     }
 
@@ -376,7 +369,7 @@ const Comments = () => {
                 {isSubmitting ? 'Posting...' : 'Post Message 💌'}
               </button>
               {!isValidMessage(newComment) && newComment.trim().length > 0 && (
-                <p style={{ color: 'var(--deep-pink)', fontSize: '0.8rem', marginTop: '10px' }}>Please write at least two words! ❤️</p>
+                <p style={{ color: 'var(--deep-pink)', fontSize: '0.8rem', marginTop: '10px' }}>Comment cannot be empty! ❤️</p>
               )}
             </div>
           )
