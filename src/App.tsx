@@ -11,12 +11,19 @@ import Admin from './components/Admin';
 import { galleryPhotos as staticPhotos } from './data/anniversaryData';
 import logo from './assets/anniversary_logo.png';
 import { useRef } from 'react';
+import { supabase } from './lib/supabaseClient';
 
 const App = () => {
   const [showGallery, setShowGallery] = useState(false);
   const [journeyModal, setJourneyModal] = useState<{ show: boolean, year: number | null }>({ show: false, year: null });
   const [hasSentEmail, setHasSentEmail] = useState(false);
-  const [dynamicPhotos, setDynamicPhotos] = useState<string[]>([]);
+  interface Photo {
+    id: string;
+    url: string;
+    reactions?: Record<string, string[]>;
+  }
+
+  const [dynamicPhotos, setDynamicPhotos] = useState<Photo[]>([]);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   // Simple routing
@@ -31,7 +38,7 @@ const App = () => {
       const res = await fetch(`${apiUrl}/anniversary/photos`);
       const result = await res.json();
       if (result.success && result.data && result.data.length > 0) {
-        setDynamicPhotos(result.data.map((p: any) => p.url));
+        setDynamicPhotos(result.data);
       }
     } catch (e) {
       console.error('Failed to fetch photos', e);
@@ -40,11 +47,31 @@ const App = () => {
 
   useEffect(() => {
     fetchPhotos();
+
+    // Subscribe to photo changes for realtime reactions
+    const channel = supabase
+      .channel('realtime photos')
+      .on('postgres_changes', 
+        { event: '*', schema: 'public', table: 'photos' }, 
+        (payload) => {
+          if (payload.eventType === 'INSERT') {
+            setDynamicPhotos(prev => [payload.new as Photo, ...prev]);
+          } else if (payload.eventType === 'UPDATE') {
+            const updated = payload.new as Photo;
+            setDynamicPhotos(prev => prev.map(p => p.id === updated.id ? updated : p));
+          }
+        }
+      )
+      .subscribe();
+
     const handleHashChange = () => {
       setIsAdminPath(window.location.hash === '#/admin' || window.location.pathname === '/admin');
     };
     window.addEventListener('hashchange', handleHashChange);
-    return () => window.removeEventListener('hashchange', handleHashChange);
+    return () => {
+      window.removeEventListener('hashchange', handleHashChange);
+      supabase.removeChannel(channel);
+    };
   }, [fetchPhotos]);
 
   const initialCelebrationDate = new Date(2026, 2, 20); // Initial 3rd Year Anniversary
@@ -99,7 +126,14 @@ const App = () => {
     }
   };
 
-  const allPhotos = [...dynamicPhotos, ...staticPhotos];
+  // Adapt static photos to the same interface
+  const formattedStaticPhotos: Photo[] = staticPhotos.map((url, i) => ({
+    id: `static-${i}`,
+    url: url,
+    reactions: {}
+  }));
+
+  const allPhotos = [...dynamicPhotos, ...formattedStaticPhotos];
 
   if (isAdminPath) {
     return <Admin />;
@@ -138,7 +172,17 @@ const App = () => {
           {deferredPrompt && (
             <button onClick={handleInstallClick} className="install-pill">Download App 📥</button>
           )}
-          <a href="#/admin" className="login-pill">Admin Login 🔒</a>
+          <a href="#/admin" style={{ 
+            color: 'var(--text-muted)', 
+            textDecoration: 'none', 
+            fontSize: '0.85rem', 
+            fontWeight: '500',
+            opacity: 0.6,
+            transition: 'opacity 0.2s'
+          }}
+          onMouseOver={(e) => e.currentTarget.style.opacity = '1'}
+          onMouseOut={(e) => e.currentTarget.style.opacity = '0.6'}
+          >Login</a>
         </div>
       </nav>
 

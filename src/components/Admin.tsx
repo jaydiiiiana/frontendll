@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 const Admin = () => {
   const [file, setFile] = useState<File | null>(null);
@@ -6,21 +6,48 @@ const Admin = () => {
   const [status, setStatus] = useState('');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [password, setPassword] = useState('');
+  const [photos, setPhotos] = useState<any[]>([]);
 
   const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchPhotos();
+    }
+  }, [isAuthenticated]);
+
+  const fetchPhotos = async () => {
+    try {
+      const res = await fetch(`${apiUrl}/anniversary/photos`);
+      const result = await res.json();
+      if (result.success) {
+        setPhotos(result.data);
+      }
+    } catch (e) {
+      console.error('Failed to fetch photos');
+    }
+  };
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     if (password === 'diana152023@jaydi') { // Updated password
       setIsAuthenticated(true);
+      localStorage.setItem('admin_auth', 'true');
     } else {
       alert('Wrong password!');
     }
   };
 
+  useEffect(() => {
+    if (localStorage.getItem('admin_auth') === 'true') {
+      setIsAuthenticated(true);
+    }
+  }, []);
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
+    if (e.target.files && e.target.files[0]) {
       setFile(e.target.files[0]);
+      setStatus('');
     }
   };
 
@@ -28,15 +55,12 @@ const Admin = () => {
     if (!file) return;
 
     setUploading(true);
-    setStatus('Uploading to storage...');
+    setStatus('Uploading and processing...');
 
     try {
-      // Create FormData to send the file
       const formData = new FormData();
       formData.append('file', file);
 
-      setStatus('Uploading and saving...');
-      
       const response = await fetch(`${apiUrl}/anniversary/upload`, {
         method: 'POST',
         body: formData,
@@ -45,8 +69,9 @@ const Admin = () => {
       const result = await response.json();
       if (!result.success) throw new Error(result.error);
 
-      setStatus('✅ Success! Photo added.');
+      setStatus('✅ Success! Your memory has been saved.');
       setFile(null);
+      fetchPhotos(); // Refresh list
     } catch (err: any) {
       console.error(err);
       setStatus(`❌ Error: ${err.message}`);
@@ -55,51 +80,232 @@ const Admin = () => {
     }
   };
 
+  const handleLogout = () => {
+    localStorage.removeItem('admin_auth');
+    setIsAuthenticated(false);
+    setPassword('');
+  };
+
   if (!isAuthenticated) {
     return (
-      <div style={{ padding: '100px 20px', textAlign: 'center' }}>
-        <h2>Admin Login</h2>
-        <form onSubmit={handleLogin} style={{ marginTop: '20px' }}>
-          <input 
-            type="password" 
-            placeholder="Enter password" 
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            style={{ padding: '10px', borderRadius: '5px', border: '1px solid #ccc' }}
-          />
-          <button type="submit" className="btn-mint" style={{ marginLeft: '10px' }}>Login</button>
-        </form>
+      <div style={{ 
+        minHeight: '100vh', 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'center', 
+        background: 'linear-gradient(135deg, var(--soft-pink) 0%, var(--bg-cream) 100%)',
+        padding: '20px'
+      }}>
+        <div style={{ 
+          background: 'rgba(255, 255, 255, 0.8)', 
+          backdropFilter: 'blur(10px)',
+          padding: '50px 40px', 
+          borderRadius: '40px', 
+          boxShadow: '0 20px 50px rgba(0,0,0,0.05)',
+          maxWidth: '450px',
+          width: '100%',
+          textAlign: 'center',
+          border: '1px solid white'
+        }}>
+          <div style={{ fontSize: '3rem', marginBottom: '20px' }}>🔐</div>
+          <h2 className="handwritten" style={{ fontSize: '2.5rem', color: 'var(--deep-pink)', marginBottom: '10px' }}>Admin Login</h2>
+          <p style={{ color: 'var(--text-muted)', marginBottom: '30px' }}>Manage our special memories.</p>
+          
+          <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+            <input 
+              type="password" 
+              placeholder="Magic Password..." 
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              style={{ 
+                padding: '15px 25px', 
+                borderRadius: '50px', 
+                border: '1px solid #eee', 
+                background: 'white',
+                fontSize: '1rem',
+                outline: 'none',
+                boxShadow: '0 5px 15px rgba(0,0,0,0.02)'
+              }}
+              autoFocus
+            />
+            <button type="submit" className="btn-mint" style={{ 
+              padding: '12px 25px', 
+              borderRadius: '50px', 
+              justifyContent: 'center',
+              fontSize: '1rem',
+              fontWeight: 'bold',
+              marginTop: '10px'
+            }}>
+              Login
+            </button>
+          </form>
+          <button 
+            onClick={() => window.location.href = '/'} 
+            style={{ 
+              marginTop: '25px', 
+              background: 'none', 
+              border: 'none', 
+              color: 'var(--text-muted)', 
+              fontSize: '0.9rem', 
+              cursor: 'pointer',
+              textDecoration: 'underline'
+            }}
+          >
+            Back to Website
+          </button>
+        </div>
       </div>
     );
   }
 
   return (
-    <div style={{ padding: '100px 20px', maxWidth: '600px', margin: '0 auto', textAlign: 'center' }}>
-      <h1>Admin Panel</h1>
-      <p style={{ marginBottom: '30px' }}>Add a new photo to the collection.</p>
-      
-      <div style={{ background: 'white', padding: '40px', borderRadius: '30px', boxShadow: '0 10px 30px rgba(0,0,0,0.05)' }}>
-        <input type="file" accept="image/*" onChange={handleFileChange} style={{ marginBottom: '20px' }} />
-        {file && (
-          <div style={{ marginBottom: '20px' }}>
-            <img src={URL.createObjectURL(file)} alt="Preview" style={{ width: '100%', borderRadius: '15px' }} />
+    <div style={{ 
+      minHeight: '100vh', 
+      background: 'var(--bg-cream)',
+      padding: '40px 5%'
+    }}>
+      <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
+        <header style={{ 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'center', 
+          marginBottom: '50px',
+          background: 'white',
+          padding: '20px 30px',
+          borderRadius: '25px',
+          boxShadow: '0 5px 20px rgba(0,0,0,0.03)'
+        }}>
+          <div style={{ textAlign: 'left' }}>
+            <h1 className="handwritten" style={{ margin: 0, color: 'var(--deep-pink)', fontSize: '2.2rem' }}>Love Dashboard</h1>
+            <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '0.9rem' }}>The control center of our memories.</p>
           </div>
-        )}
-        <button 
-          onClick={handleUpload} 
-          disabled={uploading || !file} 
-          className="btn-mint"
-          style={{ width: '100%', padding: '15px' }}
-        >
-          {uploading ? 'Processing...' : 'Upload Memory 📸'}
-        </button>
-        <p style={{ marginTop: '20px', fontWeight: 'bold' }}>{status}</p>
-        <button 
-           onClick={() => window.location.href = '/'} 
-           style={{ marginTop: '20px', background: 'transparent', border: 'none', color: '#ff85a1', cursor: 'pointer', textDecoration: 'underline' }}
-        >
-          Back to Website
-        </button>
+          <div style={{ display: 'flex', gap: '15px' }}>
+             <button onClick={() => window.location.href = '/'} style={{ padding: '10px 20px', borderRadius: '50px', border: '1px solid var(--soft-pink)', background: 'transparent', color: 'var(--deep-pink)', fontWeight: 'bold', cursor: 'pointer' }}>View Site</button>
+             <button onClick={handleLogout} style={{ padding: '10px 20px', borderRadius: '50px', border: 'none', background: 'var(--soft-pink)', color: 'var(--deep-pink)', fontWeight: 'bold', cursor: 'pointer' }}>Logout</button>
+          </div>
+        </header>
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.5fr', gap: '40px' }}>
+          {/* Upload Section */}
+          <div>
+            <div style={{ 
+              background: 'white', 
+              padding: '40px', 
+              borderRadius: '30px', 
+              boxShadow: '0 10px 30px rgba(0,0,0,0.05)',
+              position: 'sticky',
+              top: '40px'
+            }}>
+              <h2 style={{ marginBottom: '20px', fontSize: '1.5rem', color: 'var(--text-brown)' }}>Upload New Memory</h2>
+              
+              <div style={{ 
+                border: '2px dashed var(--soft-pink)', 
+                borderRadius: '20px', 
+                padding: '30px', 
+                marginBottom: '20px',
+                background: '#fafafa',
+                position: 'relative'
+              }}>
+                <input 
+                  type="file" 
+                  accept="image/*" 
+                  onChange={handleFileChange} 
+                  style={{ 
+                    position: 'absolute', 
+                    inset: 0, 
+                    opacity: 0, 
+                    cursor: 'pointer' 
+                  }} 
+                />
+                <div style={{ pointerEvents: 'none' }}>
+                  <div style={{ fontSize: '2rem', marginBottom: '10px' }}>📸</div>
+                  <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '0.9rem' }}>
+                    {file ? file.name : 'Click or drop a photo here'}
+                  </p>
+                </div>
+              </div>
+
+              {file && (
+                <div style={{ marginBottom: '20px' }}>
+                  <img src={URL.createObjectURL(file)} alt="Preview" style={{ width: '100%', borderRadius: '15px', maxHeight: '200px', objectFit: 'cover' }} />
+                </div>
+              )}
+
+              <button 
+                onClick={handleUpload} 
+                disabled={uploading || !file} 
+                className="btn-mint"
+                style={{ width: '100%', padding: '15px', borderRadius: '50px', justifyContent: 'center' }}
+              >
+                {uploading ? 'Working our magic...' : 'Upload to Gallery ✨'}
+              </button>
+
+              {status && (
+                <div style={{ 
+                  marginTop: '20px', 
+                  padding: '12px', 
+                  borderRadius: '12px', 
+                  background: status.includes('❌') ? '#fff1f0' : '#f6ffed',
+                  color: status.includes('❌') ? '#ff4d4f' : '#52c41a',
+                  fontSize: '0.9rem',
+                  fontWeight: '500'
+                }}>
+                  {status}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Photos Management Section */}
+          <div style={{ 
+            background: 'white', 
+            padding: '40px', 
+            borderRadius: '30px', 
+            boxShadow: '0 10px 30px rgba(0,0,0,0.05)',
+            minHeight: '600px'
+          }}>
+            <h2 style={{ marginBottom: '25px', fontSize: '1.5rem', color: 'var(--text-brown)', textAlign: 'left' }}>Memory Library ({photos.length})</h2>
+            <div style={{ 
+              display: 'grid', 
+              gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', 
+              gap: '15px',
+              maxHeight: '70vh',
+              overflowY: 'auto',
+              padding: '5px'
+            }}>
+              {photos.length > 0 ? (
+                photos.map((p) => (
+                  <div key={p.id} style={{ 
+                    position: 'relative', 
+                    aspectRatio: '1/1', 
+                    borderRadius: '12px', 
+                    overflow: 'hidden',
+                    boxShadow: '0 3px 10px rgba(0,0,0,0.05)'
+                  }}>
+                    <img src={p.url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="Uploaded" />
+                    <div style={{ 
+                      position: 'absolute', 
+                      bottom: 0, 
+                      left: 0, 
+                      right: 0, 
+                      background: 'rgba(0,0,0,0.3)', 
+                      padding: '5px', 
+                      color: 'white', 
+                      fontSize: '0.7rem',
+                      backdropFilter: 'blur(4px)'
+                    }}>
+                      {new Date(p.created_at).toLocaleDateString()}
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div style={{ gridColumn: '1 / -1', padding: '50px 0', color: 'var(--text-muted)' }}>
+                  No photos uploaded yet. They'll appear here!
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
