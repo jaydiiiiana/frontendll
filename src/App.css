@@ -531,3 +531,115 @@ h1, h2, h3, .handwritten {
         font-size: 1.5rem;
     }
 }
+/* Admin Section Styles */
+.admin-container {
+    min-height: 100vh;
+    background: var(--bg-cream);
+    padding: 40px 5%;
+}
+
+.admin-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 50px;
+    background: white;
+    padding: 20px 30px;
+    border-radius: 25px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.03);
+}
+
+.admin-grid {
+    display: grid;
+    grid-template-columns: 1fr 1.5fr;
+    gap: 40px;
+}
+
+.admin-card {
+    background: white;
+    padding: 30px;
+    border-radius: 30px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+}
+
+.sticky-top {
+    position: sticky;
+    top: 40px;
+}
+
+/* Comment Section Indentation */
+.comment-item {
+    position: relative;
+    padding: 20px;
+    border-radius: 20px;
+    margin-bottom: 15px;
+    background: white;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+    --indent: 40px;
+}
+
+.comment-item.is-reply {
+    background-color: #fffdfd;
+    margin-left: var(--indent);
+    box-shadow: none;
+    border: 1px solid #ffe8ed;
+}
+
+@media (max-width: 768px) {
+    .admin-header {
+        flex-direction: column;
+        text-align: center !important;
+        gap: 20px;
+    }
+    
+    .admin-header div {
+        text-align: center !important;
+    }
+
+    .admin-header div:last-child {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        width: 100%;
+    }
+
+    .admin-header button {
+        width: 100%;
+    }
+
+    .admin-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .sticky-top {
+        position: static;
+    }
+
+    .admin-card {
+        padding: 20px;
+    }
+
+    .comment-item {
+        --indent: 15px;
+        padding: 15px;
+    }
+
+    .photo-grid-3x3 {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+    }
+
+    .admin-container {
+        padding: 20px 15px;
+    }
+}
+
+@media (max-width: 480px) {
+    .photo-grid-3x3 {
+        grid-template-columns: 1fr;
+    }
+    
+    .logo-text {
+        font-size: 1.4rem;
+    }
+}

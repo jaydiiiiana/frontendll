@@ -96,16 +96,13 @@ const Admin = () => {
         background: 'linear-gradient(135deg, var(--soft-pink) 0%, var(--bg-cream) 100%)',
         padding: '20px'
       }}>
-        <div style={{ 
-          background: 'rgba(255, 255, 255, 0.8)', 
+        <div className="admin-card" style={{ 
           backdropFilter: 'blur(10px)',
-          padding: '50px 40px', 
-          borderRadius: '40px', 
-          boxShadow: '0 20px 50px rgba(0,0,0,0.05)',
           maxWidth: '450px',
           width: '100%',
           textAlign: 'center',
-          border: '1px solid white'
+          border: '1px solid white',
+          background: 'rgba(255, 255, 255, 0.8)'
         }}>
           <div style={{ fontSize: '3rem', marginBottom: '20px' }}>🔐</div>
           <h2 className="handwritten" style={{ fontSize: '2.5rem', color: 'var(--deep-pink)', marginBottom: '10px' }}>Admin Login</h2>
@@ -159,22 +156,9 @@ const Admin = () => {
   }
 
   return (
-    <div style={{ 
-      minHeight: '100vh', 
-      background: 'var(--bg-cream)',
-      padding: '40px 5%'
-    }}>
+    <div className="admin-container">
       <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
-        <header style={{ 
-          display: 'flex', 
-          justifyContent: 'space-between', 
-          alignItems: 'center', 
-          marginBottom: '50px',
-          background: 'white',
-          padding: '20px 30px',
-          borderRadius: '25px',
-          boxShadow: '0 5px 20px rgba(0,0,0,0.03)'
-        }}>
+        <header className="admin-header">
           <div style={{ textAlign: 'left' }}>
             <h1 className="handwritten" style={{ margin: 0, color: 'var(--deep-pink)', fontSize: '2.2rem' }}>Love Dashboard</h1>
             <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '0.9rem' }}>The control center of our memories.</p>
@@ -185,17 +169,10 @@ const Admin = () => {
           </div>
         </header>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.5fr', gap: '40px' }}>
+        <div className="admin-grid">
           {/* Upload Section */}
           <div>
-            <div style={{ 
-              background: 'white', 
-              padding: '40px', 
-              borderRadius: '30px', 
-              boxShadow: '0 10px 30px rgba(0,0,0,0.05)',
-              position: 'sticky',
-              top: '40px'
-            }}>
+            <div className="admin-card sticky-top">
               <h2 style={{ marginBottom: '20px', fontSize: '1.5rem', color: 'var(--text-brown)' }}>Upload New Memory</h2>
               
               <div style={{ 
@@ -257,13 +234,7 @@ const Admin = () => {
           </div>
 
           {/* Photos Management Section */}
-          <div style={{ 
-            background: 'white', 
-            padding: '40px', 
-            borderRadius: '30px', 
-            boxShadow: '0 10px 30px rgba(0,0,0,0.05)',
-            minHeight: '600px'
-          }}>
+          <div className="admin-card" style={{ minHeight: '600px' }}>
             <h2 style={{ marginBottom: '25px', fontSize: '1.5rem', color: 'var(--text-brown)', textAlign: 'left' }}>Memory Library ({photos.length})</h2>
             <div style={{ 
               display: 'grid', 

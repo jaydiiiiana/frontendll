@@ -40,16 +40,7 @@ const CommentItem = ({
   const currentReplyText = replyComments[c.id] || '';
 
   return (
-    <div key={c.id} style={{ 
-      backgroundColor: isReply ? '#fffdfd' : 'white', 
-      padding: '20px', 
-      borderRadius: '20px', 
-      marginBottom: '15px', 
-      marginLeft: isReply ? '40px' : '0',
-      boxShadow: isReply ? 'none' : '0 4px 15px rgba(0,0,0,0.03)',
-      border: isReply ? '1px solid #ffe8ed' : 'none',
-      position: 'relative',
-    }}>
+    <div key={c.id} className={`comment-item ${isReply ? 'is-reply' : ''}`}>
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
         <span style={{ fontWeight: '700', color: 'var(--deep-pink)' }}>{c.nickname}</span>
         <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{new Date(c.created_at).toLocaleDateString()}</span>
