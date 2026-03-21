@@ -54,11 +54,17 @@ const App = () => {
       .on('postgres_changes', 
         { event: '*', schema: 'public', table: 'photos' }, 
         (payload) => {
+          const raw = payload.new as any;
+          const photo: Photo = {
+            id: raw.id,
+            url: raw.image_url || raw.url, // Handle both image_url and url
+            reactions: raw.reactions || {}
+          };
+
           if (payload.eventType === 'INSERT') {
-            setDynamicPhotos(prev => [payload.new as Photo, ...prev]);
+            setDynamicPhotos(prev => [photo, ...prev]);
           } else if (payload.eventType === 'UPDATE') {
-            const updated = payload.new as Photo;
-            setDynamicPhotos(prev => prev.map(p => p.id === updated.id ? updated : p));
+            setDynamicPhotos(prev => prev.map(p => p.id === photo.id ? photo : p));
           }
         }
       )
@@ -127,13 +133,21 @@ const App = () => {
   };
 
   // Adapt static photos to the same interface
-  const formattedStaticPhotos: Photo[] = staticPhotos.map((url, i) => ({
-    id: `static-${i}`,
+  const formattedStaticPhotos: Photo[] = staticPhotos.map((url) => ({
+    id: url, // Use URL as the unique ID for static photos
     url: url,
     reactions: {}
   }));
 
-  const allPhotos = [...dynamicPhotos, ...formattedStaticPhotos];
+  // Merge all photos and deduplicate by URL (favoring dynamic results from DB)
+  const allPhotosMap = new Map<string, Photo>();
+  
+  // Add static photos first
+  formattedStaticPhotos.forEach(p => allPhotosMap.set(p.url, p));
+  // Add dynamic photos (will overwrite static ones with actual reaction data)
+  dynamicPhotos.forEach(p => allPhotosMap.set(p.url, p));
+  
+  const allPhotos = Array.from(allPhotosMap.values());
 
   if (isAdminPath) {
     return <Admin />;

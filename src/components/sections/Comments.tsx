@@ -15,6 +15,7 @@ const Comments = () => {
   const [comments, setComments] = useState<Comment[]>([]);
   const [nickname, setNickname] = useState('');
   const [newComment, setNewComment] = useState('');
+  const [replyComment, setReplyComment] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showNicknameInput, setShowNicknameInput] = useState(true);
@@ -75,9 +76,11 @@ const Comments = () => {
       setShowNicknameInput(true);
       return;
     }
-    if (!newComment.trim()) return;
+    
+    const textToSubmit = parentId ? replyComment : newComment;
+    if (!textToSubmit.trim()) return;
 
-    if (containsBadWords(nickname) || containsBadWords(newComment)) {
+    if (containsBadWords(nickname) || containsBadWords(textToSubmit)) {
       setError('Please be kind! Inappropriate words detected.');
       return;
     }
@@ -89,14 +92,15 @@ const Comments = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           nickname, 
-          comment: newComment,
+          comment: textToSubmit,
           parent_id: parentId 
         }),
       });
 
       const data = await res.json();
       if (data.success) {
-        setNewComment('');
+        if (parentId) setReplyComment('');
+        else setNewComment('');
         setReplyingTo(null);
       }
     } catch (e) {
@@ -145,7 +149,8 @@ const Comments = () => {
       </div>
       <p style={{ color: 'var(--text-brown)', lineHeight: '1.6', marginBottom: '12px' }}>{c.comment}</p>
       
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center' }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center', position: 'relative', zIndex: 1 }}>
+        {/* Reactions Display */}
         {c.reactions && Object.entries(c.reactions).map(([emoji, users]) => users.length > 0 && (
           <button 
             key={emoji}
@@ -158,16 +163,18 @@ const Comments = () => {
               border: users.includes(nickname) ? '1px solid var(--deep-pink)' : '1px solid #eee',
               background: users.includes(nickname) ? 'var(--soft-pink)' : '#f9f9f9',
               fontSize: '0.8rem',
-              cursor: 'pointer'
+              cursor: 'pointer',
+              zIndex: 5
             }}
           >
             <span>{emoji} {users.length}</span>
           </button>
         ))}
 
-        <div style={{ display: 'flex', gap: '5px', marginLeft: 'auto' }}>
+        {/* Reaction Picker */}
+        <div style={{ display: 'flex', gap: '5px', marginLeft: 'auto', zIndex: 10 }}>
           {emojis.map(emoji => (
-            <button key={emoji} onClick={() => handleReact(c.id, emoji)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.1rem' }}>{emoji}</button>
+            <button key={emoji} onClick={(e) => { e.stopPropagation(); handleReact(c.id, emoji); }} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.1rem', padding: '5px' }}>{emoji}</button>
           ))}
         </div>
 
@@ -175,8 +182,8 @@ const Comments = () => {
           onClick={() => {
             if (!nickname.trim()) {
               setShowNicknameInput(true);
-              document.getElementById('comments')?.scrollIntoView({ behavior: 'smooth' });
             } else {
+              setReplyComment('');
               setReplyingTo(replyingTo === c.id ? null : c.id);
             }
           }}
@@ -195,18 +202,17 @@ const Comments = () => {
           {replyingTo === c.id && (
             <div style={{ marginLeft: '40px', marginTop: '10px', padding: '15px', background: '#fcfcfc', borderRadius: '15px', border: '1px solid #eee' }}>
               <textarea 
-                value={newComment}
-                onChange={(e) => setNewComment(e.target.value)}
+                value={replyComment}
+                onChange={(e) => setReplyComment(e.target.value)}
                 placeholder="Write a reply..."
-                style={{ width: '100%', padding: '10px', borderRadius: '10px', border: '1px solid #eee', outline: 'none', fontSize: '0.9rem', minHeight: '60px' }}
-                autoFocus
+                style={{ width: '100%', padding: '10px', borderRadius: '10px', border: '1px solid #eee', outline: 'none', fontSize: '0.9rem', minHeight: '60px', direction: 'ltr', textAlign: 'left' }}
               />
               <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '10px' }}>
                 <button 
                   onClick={(e) => handleSubmit(e, c.id)} 
-                  disabled={isSubmitting || !newComment.trim()}
+                  disabled={isSubmitting || !replyComment.trim()}
                   className="btn-mint" 
-                  style={{ padding: '8px 20px', fontSize: '0.85rem' }}
+                  style={{ padding: '8px 20px', fontSize: '0.85rem', cursor: 'pointer' }}
                 >
                   Post Reply
                 </button>
@@ -228,7 +234,7 @@ const Comments = () => {
           <div style={{ maxWidth: '450px', margin: '0 auto 50px', background: 'white', padding: '40px', borderRadius: '35px', boxShadow: '0 15px 40px rgba(0,0,0,0.06)', border: '1px solid #fff' }}>
             <div style={{ fontSize: '3rem', marginBottom: '15px' }}>✨</div>
             <h3 style={{ marginBottom: '15px', color: 'var(--text-brown)', fontSize: '1.5rem' }}>One quick thing!</h3>
-            <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '25px' }}>What's your name? (Your nickname will be used for your messages and reactions!)</p>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '25px' }}>What's your name?</p>
             <input 
               type="text" 
               value={nickname} 
@@ -245,7 +251,6 @@ const Comments = () => {
                 textAlign: 'center',
                 background: '#fafafa'
               }}
-              autoFocus
             />
             <button 
                onClick={() => {
@@ -253,13 +258,13 @@ const Comments = () => {
                    setShowNicknameInput(false);
                    localStorage.setItem('anniversary_nickname', nickname);
                  } else {
-                   setError(nickname.trim() ? 'Please use a respectful name! ❤️' : 'Setting a nickname is required to start!');
+                   setError(nickname.trim() ? 'Please use a respectful name! ❤️' : 'Nickname is required!');
                  }
                }} 
                className="btn-mint" 
                style={{ width: '100%', justifyContent: 'center', padding: '15px', fontSize: '1.1rem' }}
             >
-              Start Commenting ✨
+              Start ✨
             </button>
             {error && <p style={{ color: '#ff4d4f', marginTop: '15px', fontSize: '0.9rem', fontWeight: 'bold' }}>{error}</p>}
           </div>
@@ -275,13 +280,13 @@ const Comments = () => {
                 value={newComment}
                 onChange={(e) => setNewComment(e.target.value)}
                 placeholder="Write your sweet message here..."
-                style={{ width: '100%', padding: '15px', borderRadius: '15px', border: '1px solid #eee', outline: 'none', fontSize: '1rem', minHeight: '120px', background: '#fafafa', resize: 'none' }}
+                style={{ width: '100%', padding: '15px', borderRadius: '15px', border: '1px solid #eee', outline: 'none', fontSize: '1rem', minHeight: '120px', background: '#fafafa', resize: 'none', direction: 'ltr', textAlign: 'left' }}
               />
               <button 
                 onClick={(e) => handleSubmit(e)} 
                 disabled={isSubmitting || !newComment.trim()}
                 className="btn-mint" 
-                style={{ width: '100%', marginTop: '20px', justifyContent: 'center', padding: '15px' }}
+                style={{ width: '100%', marginTop: '20px', justifyContent: 'center', padding: '15px', cursor: 'pointer' }}
               >
                 {isSubmitting ? 'Posting...' : 'Post Message 💌'}
               </button>

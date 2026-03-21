@@ -92,43 +92,41 @@ const Modals = ({ journeyModal, showGallery, onCloseJourney, onCloseGallery, cus
                       )}
                     </div>
                     
-                    {!photo.id.startsWith('static-') && (
-                      <div style={{ padding: '12px', background: 'white' }}>
-                        <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', marginBottom: '10px' }}>
-                          {emojis.map(emoji => (
-                            <button 
-                              key={emoji} 
-                              onClick={() => handleReact(photo.id, emoji)}
-                              style={{ 
-                                background: photo.reactions?.[emoji]?.includes(nickname) ? 'var(--soft-pink)' : 'none', 
-                                border: 'none', 
-                                cursor: 'pointer', 
-                                fontSize: '1.2rem', 
-                                padding: '5px',
-                                borderRadius: '10px',
-                                transition: 'all 0.2s'
-                              }}
-                            >
-                              {emoji}
-                            </button>
-                          ))}
-                        </div>
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px', justifyContent: 'center' }}>
-                          {photo.reactions && Object.entries(photo.reactions).map(([emoji, users]) => users.length > 0 && (
-                            <span key={emoji} style={{ 
-                              fontSize: '0.75rem', 
-                              color: 'var(--text-muted)',
-                              background: '#f9f9f9',
-                              padding: '2px 8px',
-                              borderRadius: '20px',
-                              fontWeight: '600'
-                            }}>
-                              {emoji} {users.length}
-                            </span>
-                          ))}
-                        </div>
+                    <div style={{ padding: '12px', background: 'white' }}>
+                      <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', marginBottom: '10px' }}>
+                        {emojis.map(emoji => (
+                          <button 
+                            key={emoji} 
+                            onClick={() => handleReact(photo.id, emoji)}
+                            style={{ 
+                              background: photo.reactions?.[emoji]?.includes(nickname) ? 'var(--soft-pink)' : 'none', 
+                              border: 'none', 
+                              cursor: 'pointer', 
+                              fontSize: '1.2rem', 
+                              padding: '5px',
+                              borderRadius: '10px',
+                              transition: 'all 0.2s'
+                            }}
+                          >
+                            {emoji}
+                          </button>
+                        ))}
                       </div>
-                    )}
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px', justifyContent: 'center' }}>
+                        {photo.reactions && Object.entries(photo.reactions).map(([emoji, users]) => users.length > 0 && (
+                          <span key={emoji} style={{ 
+                            fontSize: '0.75rem', 
+                            color: 'var(--text-muted)',
+                            background: '#f9f9f9',
+                            padding: '2px 8px',
+                            borderRadius: '20px',
+                            fontWeight: '600'
+                          }}>
+                            {emoji} {users.length}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
                   </div>
                 );
               })}
